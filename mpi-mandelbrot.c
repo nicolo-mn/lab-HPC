@@ -210,16 +210,16 @@ int main( int argc, char *argv[] )
     assert(bitmap != NULL);
     /* [TODO] This is not a true parallel version, since the master
         does everything */
-    const int BLOCK_SIZE = ysize / comm_sz;
-    int my_ystart = my_rank * BLOCK_SIZE;
-    int my_yend = (my_rank + 1) * BLOCK_SIZE;
+    const int block_size = ysize / comm_sz;
+    int my_ystart = my_rank * block_size;
+    int my_yend = (my_rank + 1) * block_size;
     // printf("Sono il processore %d con my_start = %d e my_end = %d\n", my_rank, my_ystart, my_yend);
     draw_lines(my_ystart, my_yend, bitmap + my_ystart * xsize, xsize, ysize);
-    MPI_Gather(bitmap + my_ystart * xsize, 3 * xsize * BLOCK_SIZE, MPI_BYTE,
-    bitmap, 3 * xsize * BLOCK_SIZE, MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Gather(bitmap + my_ystart * xsize, 3 * xsize * block_size, MPI_BYTE,
+    bitmap, 3 * xsize * block_size, MPI_BYTE, 0, MPI_COMM_WORLD);
     if ( 0 == my_rank) {
         if (ysize % comm_sz) {
-            my_ystart = comm_sz * BLOCK_SIZE;
+            my_ystart = comm_sz * block_size;
             my_yend = ysize;
             draw_lines(my_ystart, my_yend, bitmap + my_ystart * xsize, xsize, ysize);
         }
