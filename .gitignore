@@ -1,4 +1,11 @@
-.vscode
-*.exe
-*.pgm
-*.ppm
+# .vscode
+# *.exe
+# *.pgm
+# *.ppm
+*
+!.gitignore
+!.gitattributes
+!*.c
+!*.h
+!*.txt
+!*.in
