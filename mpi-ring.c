@@ -71,7 +71,7 @@ To execute:
 
 int main( int argc, char *argv[] )
 {
-    int my_rank, comm_sz, K = 10;
+    int my_rank, comm_sz, K = 2;
 
     MPI_Init( &argc, &argv );
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
@@ -81,7 +81,49 @@ int main( int argc, char *argv[] )
         K = atoi(argv[1]);
     }
     /* [TODO] Rest of the code here... */
+    int n;
+    if (my_rank == 0) {
+        n = 1;
+        MPI_Send( &n,              /* buf          */
+            1,                    /* count        */
+            MPI_INT,              /* datatype     */
+            (my_rank + 1) % comm_sz,          /* destination  */
+            0,                    /* tag          */
+            MPI_COMM_WORLD       /* comm         */
+            );
+        printf("Ciao sono il processo numero %d e ho inviato il numero %d\n", my_rank, n);
+        fflush(stdout);
+    }
 
+    for (int cur_k = 0; cur_k < K; cur_k++) {
+        MPI_Recv( &n,              /* buf          */
+            1,                    /* count        */
+            MPI_INT,              /* datatype     */
+            (my_rank + comm_sz - 1) % comm_sz,              /* source       */
+            0,                    /* tag          */
+            MPI_COMM_WORLD,       /* comm         */
+            MPI_STATUS_IGNORE     /* status       */
+            );
+        printf("Ciao sono il processo numero %d e ho ricevuto il numero %d\n", my_rank, n);
+        fflush(stdout);
+        if (!(my_rank == 0 && cur_k == K - 1)) {
+            n++;
+            MPI_Send( &n,              /* buf          */
+                1,                    /* count        */
+                MPI_INT,              /* datatype     */
+                (my_rank + 1) % comm_sz,          /* destination  */
+                0,                    /* tag          */
+                MPI_COMM_WORLD       /* comm         */
+                );
+        }
+        printf("Ciao sono il processo numero %d e ho inviato il numero %d\n", my_rank, n);
+        fflush(stdout);
+    }
+    if (my_rank == 0) {
+        printf("Value of n: %d\n", n);
+    }
+    printf("Ciao sono il nodo %d e io ho finito\n", my_rank);
+    fflush(stdout);
     MPI_Finalize();
     return EXIT_SUCCESS;
 }
