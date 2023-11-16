@@ -152,6 +152,12 @@ int main( int argc, char* argv[] )
             fprintf(stderr, "FATAL: Cannot read the number of circles\n");
             MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
         }
+        MPI_Bcast(&N,             /* buffer   */
+          1,             /* count    */
+          MPI_INT,       /* datatype */
+          0,             /* root     */
+          MPI_COMM_WORLD /* comm     */
+          );
         x = (float*)malloc(N * sizeof(*x)); assert(x != NULL);
         y = (float*)malloc(N * sizeof(*y)); assert(y != NULL);
         r = (float*)malloc(N * sizeof(*r)); assert(r != NULL);
@@ -162,7 +168,18 @@ int main( int argc, char* argv[] )
             }
         }
         fclose(in);
+    } else {
+        MPI_Bcast(&N,             /* buffer   */
+          1,             /* count    */
+          MPI_INT,       /* datatype */
+          0,             /* root     */
+          MPI_COMM_WORLD /* comm     */
+          );
+        x = (float*)malloc(N * sizeof(*x)); assert(x != NULL);
+        y = (float*)malloc(N * sizeof(*y)); assert(y != NULL);
+        r = (float*)malloc(N * sizeof(*r)); assert(r != NULL);
     }
+
 
     const double tstart = MPI_Wtime();
 
@@ -171,7 +188,35 @@ int main( int argc, char* argv[] )
     // if ( 0 == my_rank ) {
     //     c = inside(x, y, r, N, K);
     // }
-    
+    MPI_Bcast(x,             /* buffer   */
+          N,             /* count    */
+          MPI_FLOAT,       /* datatype */
+          0,             /* root     */
+          MPI_COMM_WORLD /* comm     */
+          );
+    MPI_Bcast(y,             /* buffer   */
+          N,             /* count    */
+          MPI_FLOAT,       /* datatype */
+          0,             /* root     */
+          MPI_COMM_WORLD /* comm     */
+          );
+    MPI_Bcast(r,             /* buffer   */
+          N,             /* count    */
+          MPI_FLOAT,       /* datatype */
+          0,             /* root     */
+          MPI_COMM_WORLD /* comm     */
+          );
+    const int block_size = K / comm_sz;
+    const int remaining = K % comm_sz;
+    int local_c = inside(x, y, r, N, my_rank == 0 ? block_size + remaining : block_size);
+    MPI_Reduce( &local_c,  /* send buffer          */
+                &c,        /* receive buffer       */
+                1,              /* count                */
+                MPI_INT,     /* datatype             */
+                MPI_SUM,        /* operation            */
+                0,              /* destination          */
+                MPI_COMM_WORLD  /* communicator         */
+                );
     /* the master prints the result */
     if ( 0 == my_rank ) {
         printf("%d points, %d inside, area=%f\n", K, c, 1.0e6*c/K);
