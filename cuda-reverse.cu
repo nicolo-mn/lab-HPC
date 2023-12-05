@@ -143,7 +143,7 @@ void reverse( int *in, int *out, int n )
 
     cudaSafeCall( cudaMemcpy(d_in, in, n, cudaMemcpyHostToDevice) );
 
-    reverse_kernel<<(n + BLKDIM - 1) / BLKDIM, BLKDIM>>(d_in, d_out, n);
+    reverse_kernel<<<(n + BLKDIM - 1) / BLKDIM, BLKDIM>>>(d_in, d_out, n);
     cudaCheckError();
 
     cudaSafeCall( cudaMemcpy(out, d_out, n, cudaMemcpyDeviceToHost) );
@@ -169,7 +169,7 @@ void inplace_reverse( int *in, int n )
 
     cudaSafeCall( cudaMemcpy(d_in, in, n, cudaMemcpyHostToDevice) );
 
-    inplace_reverse_kernel<<(n / 2 + BLKDIM - 1) / BLKDIM, BLKDIM>>(d_in, n);
+    inplace_reverse_kernel<<<(n / 2 + BLKDIM - 1) / BLKDIM, BLKDIM>>>(d_in, n);
     cudaCheckError();
 
     cudaSafeCall( cudaMemcpy(in, d_in, n, cudaMemcpyDeviceToHost) );

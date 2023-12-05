@@ -110,7 +110,16 @@ Example:
 
 #define BLKDIM 1024
 
-__global__ odd_even_step( int *x, int n, int phase )
+/* if *a > *b, swap them. Otherwise do nothing */
+__device__ void cmp_and_swap( int* a, int* b )
+{
+    if ( *a > *b ) {
+        int tmp = *a;
+        *a = *b;
+        *b = tmp;
+    }
+}
+__global__ void odd_even_step( int *x, int n, int phase )
 {
 	const int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	if (idx < n / 2) {
@@ -119,15 +128,6 @@ __global__ odd_even_step( int *x, int n, int phase )
 	}
 }
 
-/* if *a > *b, swap them. Otherwise do nothing */
-void cmp_and_swap( int* a, int* b )
-{
-    if ( *a > *b ) {
-        int tmp = *a;
-        *a = *b;
-        *b = tmp;
-    }
-}
 
 
 /* Odd-even transposition sort */
@@ -150,7 +150,7 @@ void odd_even_sort( int* v, int n )
     cudaSafeCall( cudaMalloc((void **)&d_v, n) );
     cudaSafeCall( cudaMemcpy(d_v, v, n, cudaMemcpyHostToDevice) );
     for (int phase = 0; phase < n; phase++) {
-        odd_even_step<<(n / 2 + BLKDIM - 1) / BLKDIM, BLKDIM>>(d_v, n, phase);
+        odd_even_step<<<(n / 2 + BLKDIM - 1) / BLKDIM, BLKDIM>>>(d_v, n, phase);
         cudaCheckError();
     }
     cudaSafeCall( cudaMemcpy(v, d_v, n, cudaMemcpyDeviceToHost) );
