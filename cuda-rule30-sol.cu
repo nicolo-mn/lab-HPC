@@ -168,6 +168,7 @@ The output is stored to the file `cuda-rule30.pbm`
 - [hpc.h](hpc.h)
 
  ***/
+
 #include "hpc.h"
 #include <stdio.h>
 #include <stdlib.h>
