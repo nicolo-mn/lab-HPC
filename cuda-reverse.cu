@@ -137,16 +137,17 @@ __global__ void inplace_reverse_kernel(int *in, int n)
  */
 void reverse( int *in, int *out, int n )
 {
+    int tmp_size = n * sizeof(*in);
     int *d_in, *d_out;
-    cudaSafeCall( cudaMalloc((void**)&d_in, n) );
-    cudaSafeCall( cudaMalloc((void**)&d_out, n) );
+    cudaSafeCall( cudaMalloc((void**)&d_in, tmp_size) );
+    cudaSafeCall( cudaMalloc((void**)&d_out, tmp_size) );
 
-    cudaSafeCall( cudaMemcpy(d_in, in, n, cudaMemcpyHostToDevice) );
+    cudaSafeCall( cudaMemcpy(d_in, in, tmp_size, cudaMemcpyHostToDevice) );
 
     reverse_kernel<<<(n + BLKDIM - 1) / BLKDIM, BLKDIM>>>(d_in, d_out, n);
     cudaCheckError();
 
-    cudaSafeCall( cudaMemcpy(out, d_out, n, cudaMemcpyDeviceToHost) );
+    cudaSafeCall( cudaMemcpy(out, d_out, tmp_size, cudaMemcpyDeviceToHost) );
 
     cudaFree(d_in);
     cudaFree(d_out);
@@ -165,14 +166,15 @@ void reverse( int *in, int *out, int n )
 void inplace_reverse( int *in, int n )
 {
     int *d_in;
-    cudaSafeCall( cudaMalloc((void**)&d_in, n) );
+    int tmp_size = n * sizeof(*in);
+    cudaSafeCall( cudaMalloc((void**)&d_in, tmp_size) );
 
-    cudaSafeCall( cudaMemcpy(d_in, in, n, cudaMemcpyHostToDevice) );
+    cudaSafeCall( cudaMemcpy(d_in, in, tmp_size, cudaMemcpyHostToDevice) );
 
     inplace_reverse_kernel<<<(n / 2 + BLKDIM - 1) / BLKDIM, BLKDIM>>>(d_in, n);
     cudaCheckError();
 
-    cudaSafeCall( cudaMemcpy(in, d_in, n, cudaMemcpyDeviceToHost) );
+    cudaSafeCall( cudaMemcpy(in, d_in, tmp_size, cudaMemcpyDeviceToHost) );
 
     cudaFree(d_in);
 }
