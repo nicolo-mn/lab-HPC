@@ -124,7 +124,9 @@ __global__ void odd_even_step( int *x, int n, int phase )
 	const int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	if (idx < n / 2) {
 		int first_elem_id = phase % 2 ? idx * 2 + 1 : idx * 2;
-        cmp_and_swap(&x[first_elem_id], &x[first_elem_id+1]);
+        if (first_elem_id < n - 1) {
+            cmp_and_swap(&x[first_elem_id], &x[first_elem_id+1]);
+        }
 	}
 }
 
@@ -147,13 +149,14 @@ void odd_even_sort( int* v, int n )
     //     }
     // }
     int *d_v;
-    cudaSafeCall( cudaMalloc((void **)&d_v, n) );
-    cudaSafeCall( cudaMemcpy(d_v, v, n, cudaMemcpyHostToDevice) );
+    int tmp_size = n * sizeof(int);
+    cudaSafeCall( cudaMalloc((void **)&d_v, tmp_size) );
+    cudaSafeCall( cudaMemcpy(d_v, v, tmp_size, cudaMemcpyHostToDevice) );
     for (int phase = 0; phase < n; phase++) {
         odd_even_step<<<(n / 2 + BLKDIM - 1) / BLKDIM, BLKDIM>>>(d_v, n, phase);
         cudaCheckError();
     }
-    cudaSafeCall( cudaMemcpy(v, d_v, n, cudaMemcpyDeviceToHost) );
+    cudaSafeCall( cudaMemcpy(v, d_v, tmp_size, cudaMemcpyDeviceToHost) );
     cudaFree(d_v);
 }
 
